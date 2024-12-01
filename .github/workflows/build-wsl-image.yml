@@ -1,0 +1,62 @@
+name: Build and Publish WSL2 Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up WSL2
+        uses: vedantmgoyal9/setup-wsl2@main
+        with:
+          distro: 'Ubuntu-24.04'  # Specify the Ubuntu version
+          enable-systemd: true
+
+      - name: Install Software in WSL
+        shell: wsl-run {0}
+        run: |
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y htop
+
+      - name: Export WSL Distribution
+        shell: powershell
+        run: |
+          $exportPath = "$env:USERPROFILE\wsl-images\ubuntu-24.04-custom.tar"
+          New-Item -ItemType Directory -Force -Path (Split-Path $exportPath)
+          wsl --export Ubuntu-24.04 $exportPath
+        env:
+          WSL_DISTRO_NAME: 'Ubuntu-24.04'
+
+      - name: Upload WSL Image Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu-24.04-custom
+          path: ${{ env.USERPROFILE }}\wsl-images\ubuntu-24.04-custom.tar
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 'v1.0.0'  # Update version as needed
+          release_name: 'Custom WSL2 Ubuntu 24.04 Image'
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{ env.USERPROFILE }}\wsl-images\ubuntu-24.04-custom.tar
+          asset_name: ubuntu-24.04-custom.tar
+          asset_content_type: application/x-tar
