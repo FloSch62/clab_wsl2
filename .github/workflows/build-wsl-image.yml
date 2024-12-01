@@ -35,23 +35,40 @@ jobs:
         run: |
           $exportPath = "$env:USERPROFILE\wsl-images\clab-wsl2.tar"
           New-Item -ItemType Directory -Force -Path (Split-Path $exportPath)
+          Write-Host "Exporting Ubuntu-24.04 to $exportPath"
           wsl --export Ubuntu-24.04 $exportPath
 
           # Import the distro with a new name 'clab-wsl2'
-          wsl --import clab-wsl2 $env:USERPROFILE\wsl-images\clab-wsl2-imported $exportPath --version 2
+          $importLocation = "$env:USERPROFILE\wsl-images\clab-wsl2-imported"
+          Write-Host "Importing clab-wsl2 to $importLocation"
+          wsl --import clab-wsl2 $importLocation $exportPath --version 2
 
           # Optionally unregister the original distro if you don't need it anymore
+          # Write-Host "Unregistering Ubuntu-24.04"
           # wsl --unregister Ubuntu-24.04
 
           # Re-export the imported distro to have the desired name in the tar file
           $finalExportPath = "$env:USERPROFILE\wsl-images\clab-wsl2-final.tar"
+          Write-Host "Exporting clab-wsl2 to $finalExportPath"
           wsl --export clab-wsl2 $finalExportPath
+
+          # Set environment variable for later steps
+          echo "FINAL_EXPORT_PATH=$finalExportPath" >> $env:GITHUB_ENV
+
+          # Output the path for debugging
+          Write-Host "Exported final tar to $finalExportPath"
+
+      - name: List Exported Files
+        shell: powershell
+        run: |
+          Write-Host "Listing files in $env:USERPROFILE\wsl-images"
+          Get-ChildItem -Path "$env:USERPROFILE\wsl-images" -Recurse
 
       - name: Upload WSL Image Artifact
         uses: actions/upload-artifact@v3
         with:
           name: clab-wsl2
-          path: ${{ env.USERPROFILE }}\wsl-images\clab-wsl2-final.tar
+          path: ${{ env.FINAL_EXPORT_PATH }}
 
       - name: Create Release
         id: create_release
@@ -70,6 +87,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.USERPROFILE }}\wsl-images\clab-wsl2-final.tar
+          asset_path: ${{ env.FINAL_EXPORT_PATH }}
           asset_name: clab-wsl2-final.tar
           asset_content_type: application/x-tar
