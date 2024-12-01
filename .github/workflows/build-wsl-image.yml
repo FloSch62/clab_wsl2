@@ -24,6 +24,8 @@ jobs:
       - name: Install Software in WSL
         shell: wsl-run {0}
         run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
           curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 
       - name: Export WSL Distribution
