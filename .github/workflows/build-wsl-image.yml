@@ -18,7 +18,7 @@ jobs:
       - name: Set up WSL2
         uses: vedantmgoyal9/setup-wsl2@main
         with:
-          distro: 'Ubuntu-24.04'
+          distro: 'Debian'
           enable-systemd: true
 
       - name: Install Software in WSL
