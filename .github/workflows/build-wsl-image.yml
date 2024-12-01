@@ -33,8 +33,8 @@ jobs:
         run: |
           $exportPath = "$env:USERPROFILE\wsl-images\clab-wsl2.tar"
           New-Item -ItemType Directory -Force -Path (Split-Path $exportPath)
-          Write-Host "Exporting Ubuntu-24.04 to $exportPath"
-          wsl --export Ubuntu-24.04 $exportPath
+          Write-Host "Exporting Debian to $exportPath"
+          wsl --export Debian $exportPath
 
           $importLocation = "$env:USERPROFILE\wsl-images\clab-wsl2-imported"
           Write-Host "Importing clab-wsl2 to $importLocation"
